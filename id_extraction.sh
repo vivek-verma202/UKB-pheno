@@ -25,4 +25,6 @@ comm -23 cntrl fm > f_cntrl
 wc -l cntrl f_cntrl fm
 mv f_cntrl cntrl # dropped 102 cntrl ids that wer in FM
 cat fm cwp | sort | uniq > pain
+# get age data (column 1140 has DF 21003 i.e. age information)
+cut -d $'\t' -f 1,1140 < /mnt/nfs/backup/data/uk_biobank/ukb8045.r.tab > age.tsv
 
