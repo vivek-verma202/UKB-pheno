@@ -112,7 +112,6 @@ for i in {22..1} X; do
 sbatch vcf_${i}
 done
 
-#### -->
 
 # make ID file from fam
 # confirm if all fam has same number of IDs:
