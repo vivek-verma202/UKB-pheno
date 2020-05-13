@@ -99,7 +99,7 @@ cat -> vcf_${i} << EOF
 #SBATCH --mail-type=ALL
 #SBATCH --cpus-per-task=40
 #SBATCH --mem-per-cpu=4G
-#SBATCH --time=04:00:00
+#SBATCH --time=12:00:00
 module load plink/2.00-10252019-avx2
 plink2 --bfile /scratch/vivek22/FM_UKB/FM2/chr_${i} --recode vcf --out ${i}
 module load bcftools/1.10.2
