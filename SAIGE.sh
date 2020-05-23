@@ -26,10 +26,13 @@ done
 for i in {1..22} X; do
 sbatch geno_qc_${i}
 done
-# next 3 steps have dependence as follows:
+# next steps have dependence as follows:
 # 1.  SAIGE step 1 (for FM)
 # 2.  SAIGE step 1 (for CWP)
 # 3a. make .vcf -> 3b. make .vcf.gz -> .vcf.gz.tbi (needed for saige step 2)
+# 4.  make id file
+# 5.  SAIGE step 2 (for FM)
+# 6.  SAIGE step 2 (for CWP)
 
 # 1. ***************************** SAIGE STEP1 (for FM) ********************************* #
 for i in {22..1} X; do
@@ -112,9 +115,88 @@ for i in {22..1} X; do
 sbatch vcf_${i}
 done
 
-
 # make ID file from fam
 # confirm if all fam has same number of IDs:
-wc -l ../qc_snp/chr_*.fam
-cat ../qc_snp/chr_1.fam | awk '{print $2}' > id
+cd /scratch/vivek22/FM_UKB/FM2
+wc -l chr_*.fam
+awk '{print $2}' < chr_1.fam > id
+
+# ***************************** SAIGE STEP2 FM ********************************* #
+
+cd /scratch/vivek22/FM_UKB/FM2
+for i in 1 {3..22}; do
+cat -> s2_FM_${i} << EOF
+#!/bin/bash
+#SBATCH --account=def-ldiatc
+#SBATCH --mail-user=vivek.verma@mail.mcgill.ca
+#SBATCH --mail-type=ALL
+#SBATCH --ntasks-per-node=40
+#SBATCH --ntasks=40
+#SBATCH --mem-per-cpu=3G
+#SBATCH --time=11:58:00
+module load gcc/7.3.0 r/3.6.1
+/home/vivek22/R/x86_64-pc-linux-gnu-library/3.6/SAIGE/extdata/step2_SPAtests.R \
+        --vcfFile=${i}.vcf.gz \ 
+        --vcfFileIndex=${i}.vcf.gz.tbi \
+        --chrom=${i} \
+        --vcfField=GT \
+        --sampleFile=./id \
+        --GMMATmodelFile=out1_FM_${i}.rda \
+        --varianceRatioFile=out1_FM_${i}.varianceRatio.txt \
+        --SAIGEOutputFile=out1_FM_${i}_30markers.SAIGE.results.txt 
+EOF
+done
+for i in 1 {3..22}; do
+sbatch s2_FM_${i}
+done
+
+# ***************************** SAIGE STEP2 CWP ********************************* #
+
+cd /scratch/vivek22/FM_UKB/FM2
+for i in 1 {3..22}; do
+cat -> s2_CWP_${i} << EOF
+#!/bin/bash
+#SBATCH --account=def-ldiatc
+#SBATCH --mail-user=vivek.verma@mail.mcgill.ca
+#SBATCH --mail-type=ALL
+#SBATCH --ntasks-per-node=40
+#SBATCH --ntasks=40
+#SBATCH --mem-per-cpu=3G
+#SBATCH --time=11:58:00
+module load gcc/7.3.0 r/3.6.1
+/home/vivek22/R/x86_64-pc-linux-gnu-library/3.6/SAIGE/extdata/step2_SPAtests.R \
+        --vcfFile=./${i}.vcf.gz \ 
+        --vcfFileIndex=./${i}.vcf.gz.tbi \
+        --chrom=${i} \
+        --vcfField=GT \
+        --sampleFile=./id \
+        --GMMATmodelFile=./out1_CWP_${i}.rda \
+        --varianceRatioFile=./out1_CWP_${i}.varianceRatio.txt \
+        --SAIGEOutputFile=./out1_CWP_${i}_30markers.SAIGE.results.txt 
+EOF
+done
+for i in 1 {3..22}; do
+sbatch s2_CWP_${i}
+done
+
+#### note: run step 1 for chr_2 (running) and chr_X (git issue) followed by step 2 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
