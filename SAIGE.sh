@@ -63,8 +63,14 @@ for i in {22..1} X; do
 sbatch s1_FM_${i}
 done
 
+# fix chr_X.bim: replace X with 23
+awk -v var="23" -F" " 'BEGIN {OFS = FS} {$1 = var; print}' < chr_X.bim > 23.bim
+cp chr_X.bed 23.bed; cp chr_X.fam 23.fam
+
+
+
 # 2. ***************************** SAIGE STEP1 (for CWP) ********************************* #
-for i in {22..1} X; do
+for i in {23..1} ; do
 cat -> s1_CWP_${i} << EOF
 #!/bin/bash
 #SBATCH --account=def-ldiatc
@@ -88,13 +94,13 @@ module load gcc/7.3.0 r/3.6.1
 EOF
 done
 
-for i in {22..1} X; do
+for i in {23..1} ; do
 sbatch s1_CWP_${i}
 done
 
 # 3. ***####***####*** make vcf, vcf.gz and vcf index files ***####***####*** 
 
-for i in {22..1} X; do
+for i in {23..1} ; do
 cat -> vcf_${i} << EOF
 #!/bin/bash
 #SBATCH --account=def-ldiatc
@@ -111,7 +117,7 @@ bcftools view -Oz --no-version --threads 40 ${i}.vcf > ${i}.vcf.gz
 tabix -p vcf ${i}.vcf.gz
 EOF
 done
-for i in {22..1} X; do
+for i in {23..1} ; do
 sbatch vcf_${i}
 done
 
@@ -124,7 +130,7 @@ awk '{print $2}' < chr_1.fam > id
 # ***************************** SAIGE STEP2 FM ********************************* #
 
 cd /scratch/vivek22/FM_UKB/FM2
-for i in X {1..22}; do
+for i in {1..23}; do
 cat -> s2_FM_${i} << EOF
 #!/bin/bash
 #SBATCH --account=def-ldiatc
@@ -138,14 +144,14 @@ module load gcc/7.3.0 r/3.6.1
 /home/vivek22/R/x86_64-pc-linux-gnu-library/3.6/SAIGE/extdata/step2_SPAtests.R  --vcfFile=${i}.vcf.gz --vcfFileIndex=${i}.vcf.gz.tbi  --chrom=${i}  --vcfField=GT  --sampleFile=./id  --GMMATmodelFile=out1_FM_${i}.rda  --varianceRatioFile=out1_FM_${i}.varianceRatio.txt  --SAIGEOutputFile=out1_FM_${i}_30markers.SAIGE.results.txt 
 EOF
 done
-for i in X {1..22}; do
+for i in {1..23}; do
 sbatch s2_FM_${i}
 done
 
 # ***************************** SAIGE STEP2 CWP ********************************* #
 
 cd /scratch/vivek22/FM_UKB/FM2
-for i in X {1..22}; do
+for i in {1..23}; do
 cat -> s2_CWP_${i} << EOF
 #!/bin/bash
 #SBATCH --account=def-ldiatc
@@ -159,11 +165,12 @@ module load gcc/7.3.0 r/3.6.1
 /home/vivek22/R/x86_64-pc-linux-gnu-library/3.6/SAIGE/extdata/step2_SPAtests.R  --vcfFile=${i}.vcf.gz --vcfFileIndex=${i}.vcf.gz.tbi  --chrom=${i}  --vcfField=GT  --sampleFile=./id  --GMMATmodelFile=out1_CWP_${i}.rda  --varianceRatioFile=out1_CWP_${i}.varianceRatio.txt  --SAIGEOutputFile=out1_CWP_${i}_30markers.SAIGE.results.txt 
 EOF
 done
-for i in X {1..22}; do
+for i in {1..23}; do
 sbatch s2_CWP_${i}
 done
 
-
+# to-do:
+# sbatch s2_FM_X; sbatch s2_CWP_X
 
 
 
